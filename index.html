@@ -32,6 +32,48 @@
             padding: 20px;
         }
         
+        /* Уведомление о непрочитанных сообщениях */
+        .unread-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(90deg, var(--warning), #ffaa0088);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(255, 170, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: slideIn 0.5s ease;
+            max-width: 400px;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .unread-notification.hidden {
+            display: none;
+        }
+        
+        .close-notification {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
         /* Логин форма */
         .login-container {
             display: flex;
@@ -271,6 +313,82 @@
         
         .add-btn:hover {
             transform: translateY(-2px);
+        }
+        
+        /* Модальное окно подтверждения изменения баланса */
+        .confirm-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .confirm-modal-content {
+            background: var(--secondary-dark);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .confirm-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            color: var(--warning);
+        }
+        
+        .confirm-modal-body {
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        
+        .confirm-modal-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .confirm-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+        }
+        
+        .confirm-yes {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+        
+        .confirm-yes:hover {
+            background: var(--success);
+            color: var(--primary-dark);
+        }
+        
+        .confirm-no {
+            background: rgba(255, 71, 87, 0.1);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        
+        .confirm-no:hover {
+            background: var(--danger);
+            color: white;
         }
         
         /* Таблица */
@@ -772,6 +890,17 @@
     </style>
 </head>
 <body>
+    <!-- Уведомление о непрочитанных сообщениях -->
+    <div class="unread-notification hidden" id="unreadNotification">
+        <i class="fas fa-exclamation-circle"></i>
+        <div>
+            <strong>У вас есть непрочитанные сообщения</strong> в разделе поддержка.
+        </div>
+        <button class="close-notification" onclick="hideUnreadNotification()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
     <!-- Форма входа -->
     <div class="login-container" id="loginContainer">
         <div class="login-box">
@@ -781,11 +910,11 @@
             <h1 class="login-title">Crypto Admin Dashboard</h1>
             <div class="input-group">
                 <label for="username"><i class="fas fa-user"></i> Логин</label>
-                <input type="text" id="username" placeholder="Введите логин" value="admin9">
+                <input type="text" id="username" placeholder="Введите логин">
             </div>
             <div class="input-group">
                 <label for="password"><i class="fas fa-lock"></i> Пароль</label>
-                <input type="password" id="password" placeholder="Введите пароль" value="Admin.123451535">
+                <input type="password" id="password" placeholder="Введите пароль">
             </div>
             <button class="login-btn" onclick="login()">
                 <i class="fas fa-sign-in-alt"></i> Войти в панель
@@ -976,6 +1105,27 @@
         </div>
     </div>
 
+    <!-- Модальное окно подтверждения изменения баланса -->
+    <div class="confirm-modal-overlay" id="confirmBalanceModal">
+        <div class="confirm-modal-content">
+            <div class="confirm-modal-header">
+                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                <h2>Подтверждение изменения баланса</h2>
+            </div>
+            <div class="confirm-modal-body" id="confirmBalanceMessage">
+                <!-- Текст будет вставлен здесь -->
+            </div>
+            <div class="confirm-modal-actions">
+                <button class="confirm-btn confirm-yes" onclick="confirmBalanceChange(true)">
+                    <i class="fas fa-check"></i> Да, изменить
+                </button>
+                <button class="confirm-btn confirm-no" onclick="confirmBalanceChange(false)">
+                    <i class="fas fa-times"></i> Отмена
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Конфигурация Supabase
         const SUPABASE_URL = 'https://wkukgnkfbxgpvlraczeu.supabase.co';
@@ -995,7 +1145,16 @@
         let usersSubscription = null;
         let activeTab = 'users';
         let isSendingMessage = false;
-        let currentMessages = []; // Для хранения текущих сообщений
+        let currentMessages = [];
+        
+        // Переменные для модального окна подтверждения
+        let pendingBalanceChange = {
+            userId: null,
+            userKey: null,
+            oldBalance: null,
+            newBalance: null,
+            balanceInput: null
+        };
         
         // DOM элементы
         const loginContainer = document.getElementById('loginContainer');
@@ -1008,6 +1167,7 @@
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
         const inputArea = document.getElementById('inputArea');
+        const unreadNotification = document.getElementById('unreadNotification');
         
         // ===================== ОБЩИЕ ФУНКЦИИ =====================
         
@@ -1084,12 +1244,28 @@
                 passwordInput.value = '';
                 loginStatus.textContent = '';
                 
+                // Скрываем уведомление о непрочитанных
+                hideUnreadNotification();
+                
                 // Сбрасываем состояние
                 selectedUserId = null;
                 selectedUserEmail = null;
                 isSendingMessage = false;
                 currentMessages = [];
             }
+        }
+        
+        // Скрыть уведомление о непрочитанных сообщениях
+        function hideUnreadNotification() {
+            unreadNotification.classList.add('hidden');
+        }
+        
+        // Показать уведомление о непрочитанных сообщениях
+        function showUnreadNotification(count) {
+            unreadNotification.classList.remove('hidden');
+            // Обновляем текст, если нужно
+            const message = unreadNotification.querySelector('div');
+            message.innerHTML = `<strong>У вас есть ${count} непрочитанных сообщений</strong> в разделе поддержка.`;
         }
         
         // ===================== УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ =====================
@@ -1143,6 +1319,9 @@
                 const row = document.createElement('tr');
                 const createdDate = user.created ? new Date(user.created).toLocaleDateString('ru-RU') : '-';
                 
+                // Сохраняем оригинальный баланс в data-атрибут
+                const originalBalance = user.balance || 0;
+                
                 row.innerHTML = `
                     <td>
                         <div class="user-login">${escapeHtml(user.user_key)}</div>
@@ -1152,8 +1331,10 @@
                         <input type="number" 
                                class="table-input" 
                                id="bal_${user.id}" 
-                               value="${user.balance || 0}" 
-                               step="0.01">
+                               value="${originalBalance}" 
+                               step="0.01"
+                               data-original="${originalBalance}"
+                               onchange="handleBalanceChange('${user.id}', '${escapeHtml(user.user_key)}', ${originalBalance}, this.value, this)">
                     </td>
                     <td>
                         <select class="table-select" id="lev_${user.id}">
@@ -1188,12 +1369,70 @@
             });
         }
         
+        // Обработка изменения баланса
+        function handleBalanceChange(userId, userKey, oldBalance, newBalance, inputElement) {
+            const newBalanceNum = parseFloat(newBalance);
+            const oldBalanceNum = parseFloat(oldBalance);
+            
+            // Если значение не изменилось - ничего не делаем
+            if (newBalanceNum === oldBalanceNum) {
+                return;
+            }
+            
+            // Сохраняем данные для подтверждения
+            pendingBalanceChange = {
+                userId: userId,
+                userKey: userKey,
+                oldBalance: oldBalanceNum,
+                newBalance: newBalanceNum,
+                balanceInput: inputElement
+            };
+            
+            // Показываем модальное окно подтверждения
+            const message = `Вы хотите изменить баланс пользователя <strong>"${escapeHtml(userKey)}"</strong><br><br>
+                           Старый баланс: <span style="color: var(--success)">$${oldBalanceNum.toFixed(2)}</span><br>
+                           Новый баланс: <span style="color: var(--accent-cyan)">$${newBalanceNum.toFixed(2)}</span><br><br>
+                           Разница: <span style="color: ${newBalanceNum > oldBalanceNum ? 'var(--success)' : 'var(--danger)'}">
+                           ${newBalanceNum > oldBalanceNum ? '+' : ''}$${(newBalanceNum - oldBalanceNum).toFixed(2)}</span>`;
+            
+            document.getElementById('confirmBalanceMessage').innerHTML = message;
+            document.getElementById('confirmBalanceModal').style.display = 'flex';
+        }
+        
+        // Подтверждение изменения баланса
+        function confirmBalanceChange(confirm) {
+            const modal = document.getElementById('confirmBalanceModal');
+            modal.style.display = 'none';
+            
+            if (confirm) {
+                // Пользователь подтвердил изменение
+                saveUserBalance(pendingBalanceChange.userId);
+            } else {
+                // Пользователь отменил - возвращаем старое значение
+                if (pendingBalanceChange.balanceInput) {
+                    pendingBalanceChange.balanceInput.value = pendingBalanceChange.oldBalance;
+                }
+            }
+            
+            // Сбрасываем pending данные
+            pendingBalanceChange = {
+                userId: null,
+                userKey: null,
+                oldBalance: null,
+                newBalance: null,
+                balanceInput: null
+            };
+        }
+        
         // Сохранение изменений пользователя
         async function saveUser(userId) {
             try {
-                const balance = parseFloat(document.getElementById(`bal_${userId}`).value) || 0;
                 const level = document.getElementById(`lev_${userId}`).value;
                 const withdrawType = document.getElementById(`wt_${userId}`).value;
+                
+                // Получаем текущее значение баланса
+                const balanceInput = document.getElementById(`bal_${userId}`);
+                const balance = parseFloat(balanceInput.value) || 0;
                 
                 const { error } = await supabase
                     .from('app_users')
@@ -1208,10 +1447,49 @@
                 
                 if (error) throw error;
                 
+                // Обновляем оригинальное значение в data-атрибуте
+                balanceInput.setAttribute('data-original', balance);
+                
                 showStatus('✅ Данные пользователя сохранены!');
                 loadUsers();
             } catch (error) {
                 showStatus('❌ Ошибка сохранения: ' + error.message, 'error');
+            }
+        }
+        
+        // Сохранение только баланса (используется после подтверждения)
+        async function saveUserBalance(userId) {
+            try {
+                const balanceInput = document.getElementById(`bal_${userId}`);
+                const balance = parseFloat(balanceInput.value) || 0;
+                
+                const { error } = await supabase
+                    .from('app_users')
+                    .update({ 
+                        balance: balance,
+                        updated_at: new Date().toISOString(),
+                        updated_by: 'admin'
+                    })
+                    .eq('id', userId);
+                
+                if (error) throw error;
+                
+                // Обновляем оригинальное значение
+                balanceInput.setAttribute('data-original', balance);
+                
+                showStatus('✅ Баланс пользователя обновлен!');
+                
+                // Обновляем статистику
+                const { data: users } = await supabase
+                    .from('app_users')
+                    .select('*');
+                
+                if (users) {
+                    updateStats(users);
+                }
+                
+            } catch (error) {
+                showStatus('❌ Ошибка сохранения баланса: ' + error.message, 'error');
             }
         }
         
@@ -1368,7 +1646,7 @@
                 // Отображаем пользователей
                 displaySupportUsers(usersWithMessages);
                 
-                // Проверяем непрочитанные сообщения для бейджа
+                // Проверяем непрочитанные сообщения для бейджа и уведомления
                 checkUnreadMessages();
                 
             } catch (error) {
@@ -1475,7 +1753,7 @@
                     .from('support_chat')
                     .select('*')
                     .eq('user_id', selectedUserId)
-                    .order('created_at', { ascending: true }); // ИСПРАВЛЕНО: ascending для правильного порядка
+                    .order('created_at', { ascending: true });
                 
                 if (error) throw error;
                 
@@ -1502,7 +1780,6 @@
                 return;
             }
             
-            // ИСПРАВЛЕНО: Правильная сортировка по времени
             messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
             
             messages.forEach(msg => {
@@ -1510,7 +1787,6 @@
                 messagesArea.appendChild(messageDiv);
             });
             
-            // Прокручиваем вниз
             scrollToBottom();
         }
         
@@ -1532,7 +1808,7 @@
             return messageDiv;
         }
         
-        // ОТПРАВКА СООБЩЕНИЯ ОТ АДМИНА - ИСПРАВЛЕННАЯ
+        // ОТПРАВКА СООБЩЕНИЯ ОТ АДМИНА
         async function sendMessage() {
             if (isSendingMessage) return;
             
@@ -1562,8 +1838,6 @@
                     created_at: new Date().toISOString()
                 };
                 
-                console.log('Отправляемые данные:', messageData);
-                
                 const { error } = await supabase
                     .from('support_chat')
                     .insert([messageData]);
@@ -1573,10 +1847,7 @@
                     throw error;
                 }
                 
-                // НЕ добавляем сообщение вручную - real-time сделает это
                 messageInput.value = '';
-                
-                // Фокус остаётся в поле ввода
                 messageInput.focus();
                 
             } catch (error) {
@@ -1611,10 +1882,7 @@
                 
                 if (error) throw error;
                 
-                // Обновляем список пользователей для удаления бейджа
                 await loadSupportUsers();
-                
-                // Обновляем общий бейдж
                 checkUnreadMessages();
                 
             } catch (error) {
@@ -1622,7 +1890,7 @@
             }
         }
         
-        // Проверка непрочитанных сообщений для бейджа
+        // Проверка непрочитанных сообщений для бейджа и уведомления
         async function checkUnreadMessages() {
             try {
                 const { data: messages, error } = await supabase
@@ -1639,8 +1907,16 @@
                 if (unreadCount > 0) {
                     badge.textContent = unreadCount;
                     badge.style.display = 'inline';
+                    
+                    // Показываем уведомление вверху экрана
+                    if (activeTab !== 'support') {
+                        showUnreadNotification(unreadCount);
+                    } else {
+                        hideUnreadNotification();
+                    }
                 } else {
                     badge.style.display = 'none';
+                    hideUnreadNotification();
                 }
                 
             } catch (error) {
@@ -1650,12 +1926,10 @@
         
         // Настройка real-time для чата поддержки
         function setupChatRealtime() {
-            // Отписываемся от старой подписки
             if (chatSubscription) {
                 supabase.removeChannel(chatSubscription);
             }
             
-            // Подписываемся на все сообщения поддержки
             chatSubscription = supabase
                 .channel('support_chat_admin')
                 .on('postgres_changes', 
@@ -1665,31 +1939,21 @@
                         table: 'support_chat' 
                     },
                     async (payload) => {
-                        console.log('Новое сообщение получено:', payload.new);
-                        
-                        // Обновляем список пользователей
                         await loadSupportUsers();
                         
-                        // Если сообщение для выбранного пользователя
                         if (selectedUserId && payload.new.user_id === selectedUserId) {
-                            // Проверяем, нет ли уже такого сообщения
                             const existingMessage = document.querySelector(`[data-message-id="${payload.new.id}"]`);
                             if (!existingMessage) {
-                                // Добавляем новое сообщение
                                 const messageDiv = createMessageElement(payload.new);
                                 messagesArea.appendChild(messageDiv);
-                                
-                                // Прокручиваем вниз
                                 scrollToBottom();
                                 
-                                // Если сообщение от пользователя, помечаем как прочитанное
                                 if (!payload.new.is_admin) {
                                     await markSupportMessagesAsRead();
                                 }
                             }
                         }
                         
-                        // Уведомление для новых сообщений от других пользователей
                         if (!payload.new.is_admin && payload.new.user_id !== selectedUserId) {
                             showStatus(`📩 Новое сообщение от пользователя`, 'success');
                         }
@@ -1702,7 +1966,6 @@
                         table: 'support_chat'
                     },
                     (payload) => {
-                        // Обновляем статус прочтения
                         console.log('Сообщение обновлено:', payload.new);
                     }
                 )
@@ -1718,7 +1981,6 @@
         
         // Общая real-time подписка
         function setupRealtimeUpdates() {
-            // Подписка на обновления пользователей
             usersSubscription = supabase
                 .channel('realtime_users')
                 .on('postgres_changes', 
@@ -1733,7 +1995,6 @@
                 )
                 .subscribe();
             
-            // Настраиваем real-time для чата
             setupChatRealtime();
         }
         
@@ -1751,7 +2012,6 @@
         
         // Назначаем обработчики событий
         document.addEventListener('DOMContentLoaded', function() {
-            // Фокус на поле логина при загрузке
             usernameInput.focus();
             
             // Обработчик Enter в форме логина
