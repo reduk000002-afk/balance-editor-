@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Admin Panel | Crypto Dashboard</title>
+    <title>Admin Panel | Управление сделками</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -157,7 +157,7 @@
         
         /* Основной контейнер */
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             display: none;
         }
@@ -185,6 +185,7 @@
         .header-left p {
             color: var(--text-secondary);
             margin-top: 5px;
+            font-size: 0.9rem;
         }
         
         .header-right {
@@ -198,6 +199,7 @@
             padding: 10px 15px;
             border-radius: 10px;
             border: 1px solid var(--border-color);
+            font-size: 0.9rem;
         }
         
         .logout-btn {
@@ -208,12 +210,457 @@
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
+            font-size: 0.9rem;
         }
         
         .logout-btn:hover {
             background: var(--danger);
             color: white;
         }
+        
+        /* Вкладки */
+        .tabs {
+            display: flex;
+            background: var(--secondary-dark);
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            min-width: 150px;
+            font-size: 0.9rem;
+        }
+        
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .tab.active {
+            background: rgba(26, 93, 255, 0.1);
+            border-bottom: 3px solid var(--accent-blue);
+            color: var(--accent-cyan);
+        }
+        
+        .tab-badge {
+            background: var(--warning);
+            color: var(--primary-dark);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            margin-left: 5px;
+            font-weight: bold;
+        }
+        
+        /* Контент вкладок */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Статистика сделок */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: var(--secondary-dark);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+        
+        .stat-icon.trades {
+            background: rgba(26, 93, 255, 0.1);
+            color: var(--accent-blue);
+        }
+        
+        .stat-icon.open {
+            background: rgba(255, 170, 0, 0.1);
+            color: var(--warning);
+        }
+        
+        .stat-icon.closed {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--success);
+        }
+        
+        .stat-icon.profit {
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--accent-cyan);
+        }
+        
+        .stat-info h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+        
+        .stat-info p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        /* Фильтры для сделок */
+        .filters-container {
+            background: var(--secondary-dark);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 200px;
+            flex: 1;
+        }
+        
+        .filter-group label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .filter-group select,
+        .filter-group input {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+        
+        .filter-btn {
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.3s;
+            align-self: flex-end;
+        }
+        
+        .filter-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Таблица сделок */
+        .table-container {
+            background: var(--secondary-dark);
+            border-radius: 15px;
+            padding: 0;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            margin-bottom: 30px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+        }
+        
+        thead {
+            background: rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        th {
+            padding: 18px 15px;
+            text-align: left;
+            color: var(--text-secondary);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            padding: 18px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            vertical-align: middle;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        /* Стили для статусов */
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-processing {
+            background: rgba(255, 170, 0, 0.2);
+            color: var(--warning);
+            border: 1px solid rgba(255, 170, 0, 0.3);
+        }
+        
+        .status-closed {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--success);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+        
+        .status-cancelled {
+            background: rgba(255, 71, 87, 0.2);
+            color: var(--danger);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+        }
+        
+        /* Стили для PnL */
+        .pnl-positive {
+            color: var(--success);
+            font-weight: bold;
+        }
+        
+        .pnl-negative {
+            color: var(--danger);
+            font-weight: bold;
+        }
+        
+        .pnl-neutral {
+            color: var(--text-secondary);
+        }
+        
+        /* Кнопки действий */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+        }
+        
+        .edit-btn {
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+        }
+        
+        .edit-btn:hover {
+            background: var(--accent-cyan);
+            color: var(--primary-dark);
+        }
+        
+        .delete-btn {
+            background: rgba(255, 71, 87, 0.1);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        
+        .delete-btn:hover {
+            background: var(--danger);
+            color: white;
+        }
+        
+        /* Модальное окно редактирования сделки */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: var(--secondary-dark);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid var(--border-color);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        /* Форма редактирования */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .save-btn {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .save-btn:hover {
+            opacity: 0.9;
+        }
+        
+        .cancel-btn {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 71, 87, 0.1);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .cancel-btn:hover {
+            background: var(--danger);
+            color: white;
+        }
+        
+        /* Toast уведомления */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--secondary-dark);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1001;
+            max-width: 400px;
+        }
+        
+        /* Загрузка */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+        
+        .loading i {
+            margin-right: 10px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* ================== СТИЛИ ДЛЯ УПРАВЛЕНИЯ ПОЛЬЗОВАТЕЛЯМИ ================== */
         
         /* Статус */
         .status {
@@ -236,45 +683,6 @@
             background: rgba(255, 71, 87, 0.1);
             border: 1px solid var(--danger);
             color: var(--danger);
-        }
-        
-        /* Вкладки */
-        .tabs {
-            display: flex;
-            background: var(--secondary-dark);
-            border-radius: 15px;
-            margin-bottom: 30px;
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-        }
-        
-        .tab {
-            flex: 1;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-            border-bottom: 3px solid transparent;
-        }
-        
-        .tab:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        
-        .tab.active {
-            background: rgba(26, 93, 255, 0.1);
-            border-bottom: 3px solid var(--accent-blue);
-            color: var(--accent-cyan);
-        }
-        
-        /* Контент вкладок */
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
         }
         
         /* Панель управления */
@@ -391,49 +799,6 @@
             color: white;
         }
         
-        /* Таблица */
-        .table-container {
-            background: var(--secondary-dark);
-            border-radius: 15px;
-            padding: 0;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-            margin-bottom: 30px;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        thead {
-            background: rgba(0, 0, 0, 0.2);
-        }
-        
-        th {
-            padding: 18px 15px;
-            text-align: left;
-            color: var(--text-secondary);
-            font-weight: 600;
-            border-bottom: 1px solid var(--border-color);
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            letter-spacing: 0.5px;
-        }
-        
-        td {
-            padding: 18px 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        tr:last-child td {
-            border-bottom: none;
-        }
-        
-        tr:hover {
-            background: rgba(255, 255, 255, 0.02);
-        }
-        
         /* Элементы формы в таблице */
         .table-input, .table-select {
             background: rgba(255, 255, 255, 0.05);
@@ -464,129 +829,8 @@
             color: var(--success);
         }
         
-        /* Кнопки действий */
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-        }
+        /* ================== СТИЛИ ДЛЯ ЧАТА ПОДДЕРЖКИ ================== */
         
-        .save-btn, .delete-btn {
-            padding: 8px 15px;
-            border-radius: 8px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .save-btn {
-            background: rgba(0, 255, 136, 0.1);
-            color: var(--success);
-            border: 1px solid var(--success);
-        }
-        
-        .save-btn:hover {
-            background: var(--success);
-            color: var(--primary-dark);
-        }
-        
-        .delete-btn {
-            background: rgba(255, 71, 87, 0.1);
-            color: var(--danger);
-            border: 1px solid var(--danger);
-        }
-        
-        .delete-btn:hover {
-            background: var(--danger);
-            color: white;
-        }
-        
-        /* Статистика - теперь только общее количество пользователей */
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(1, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
-            max-width: 300px;
-        }
-        
-        .stat-card {
-            background: var(--secondary-dark);
-            border-radius: 15px;
-            padding: 25px;
-            border: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-        }
-        
-        .stat-icon.users {
-            background: rgba(26, 93, 255, 0.1);
-            color: var(--accent-blue);
-        }
-        
-        .stat-info h3 {
-            font-size: 2rem;
-            margin-bottom: 5px;
-        }
-        
-        .stat-info p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        
-        /* Модальное окно добавления */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        
-        .modal-content {
-            background: var(--secondary-dark);
-            border-radius: 20px;
-            padding: 30px;
-            width: 90%;
-            max-width: 500px;
-            border: 1px solid var(--border-color);
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-        
-        .close-modal {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-        
-        /* Стили для чата поддержки */
         .chat-container {
             display: flex;
             gap: 20px;
@@ -892,35 +1136,37 @@
         </button>
     </div>
 
-    <!-- Форма входа -->
+    <!-- Логин форма -->
     <div class="login-container" id="loginContainer">
         <div class="login-box">
             <div class="login-logo">
                 <i class="fas fa-chart-line"></i>
             </div>
-            <h1 class="login-title">Crypto Admin Dashboard</h1>
+            <h1 class="login-title">Admin Panel | Сделки</h1>
             <div class="input-group">
                 <label for="username"><i class="fas fa-user"></i> Логин</label>
-                <input type="text" id="username" placeholder="Введите логин">
+                <input type="text" id="username" placeholder="Введите логин" value="admin9">
             </div>
             <div class="input-group">
                 <label for="password"><i class="fas fa-lock"></i> Пароль</label>
-                <input type="password" id="password" placeholder="Введите пароль">
+                <input type="password" id="password" placeholder="Введите пароль" value="Admin.123451535">
             </div>
             <button class="login-btn" onclick="login()">
                 <i class="fas fa-sign-in-alt"></i> Войти в панель
             </button>
-            <div id="loginStatus" style="margin-top: 15px; color: var(--danger); font-size: 0.9rem;"></div>
         </div>
     </div>
-
+    
+    <!-- Toast уведомления -->
+    <div class="toast" id="toast"></div>
+    
     <!-- Основной интерфейс -->
     <div class="container" id="adminContainer">
         <!-- Хедер -->
         <div class="admin-header">
             <div class="header-left">
-                <h1><i class="fas fa-chart-network"></i> Crypto Admin Dashboard</h1>
-                <p>Управление пользователями и балансами</p>
+                <h1><i class="fas fa-chart-network"></i> Управление сделками</h1>
+                <p>Мониторинг и управление торговыми позициями пользователей</p>
             </div>
             <div class="header-right">
                 <div class="user-info">
@@ -931,25 +1177,135 @@
                 </button>
             </div>
         </div>
-
-        <!-- Статус -->
-        <div id="status" class="status"></div>
-
+        
         <!-- Вкладки -->
         <div class="tabs">
-            <div class="tab active" onclick="switchTab('users')">
+            <div class="tab active" onclick="switchTab('trades')">
+                <i class="fas fa-exchange-alt"></i> Сделки
+                <span id="tradesBadge" class="tab-badge" style="display: none;">0</span>
+            </div>
+            <div class="tab" onclick="switchTab('users')">
                 <i class="fas fa-users"></i> Пользователи
             </div>
             <div class="tab" onclick="switchTab('support')">
                 <i class="fas fa-headset"></i> Поддержка
-                <span id="unreadSupportBadge" class="unread-badge" style="display: none; margin-left: 5px;">0</span>
+                <span id="supportBadge" class="tab-badge" style="display: none;">0</span>
             </div>
         </div>
-
-        <!-- Контент вкладки Пользователи -->
-        <div id="usersTab" class="tab-content active">
+        
+        <!-- Вкладка Сделки -->
+        <div id="tradesTab" class="tab-content active">
+            <!-- Статистика -->
+            <div class="stats-container" id="tradesStatsContainer">
+                <div class="stat-card">
+                    <div class="stat-icon trades">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalTrades">0</h3>
+                        <p>Всего сделок</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon open">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="openTrades">0</h3>
+                        <p>На отработке</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon closed">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="closedTrades">0</h3>
+                        <p>Закрытых</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon profit">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalProfit">0</h3>
+                        <p>Общий PnL</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Фильтры -->
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label>Статус</label>
+                    <select id="filterStatus" onchange="applyFilters()">
+                        <option value="all">Все статусы</option>
+                        <option value="отработка">На отработке</option>
+                        <option value="закрыта">Закрытые</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Направление</label>
+                    <select id="filterDirection" onchange="applyFilters()">
+                        <option value="all">Все направления</option>
+                        <option value="Лонг">Лонг</option>
+                        <option value="Шорт">Шорт</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Пользователь</label>
+                    <input type="text" id="filterUser" placeholder="Поиск по ID или email" oninput="applyFilters()">
+                </div>
+                <div class="filter-group">
+                    <label>Символ</label>
+                    <select id="filterSymbol" onchange="applyFilters()">
+                        <option value="all">Все символы</option>
+                        <option value="BTC">BTC</option>
+                        <option value="ETH">ETH</option>
+                        <option value="AAPL">AAPL</option>
+                        <option value="TSLA">TSLA</option>
+                        <option value="NVDA">NVDA</option>
+                    </select>
+                </div>
+                <button class="filter-btn" onclick="resetFilters()">
+                    <i class="fas fa-redo"></i> Сбросить
+                </button>
+            </div>
+            
+            <!-- Таблица сделок -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Пользователь</th>
+                            <th>Символ</th>
+                            <th>Направление</th>
+                            <th>Размер</th>
+                            <th>Плечо</th>
+                            <th>Цена входа</th>
+                            <th>Статус</th>
+                            <th>PnL</th>
+                            <th>Дата открытия</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tradesTable">
+                        <tr>
+                            <td colspan="11" class="loading">
+                                <i class="fas fa-spinner"></i> Загрузка данных...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Вкладка Пользователи -->
+        <div id="usersTab" class="tab-content">
             <!-- Статистика - только общее количество пользователей -->
-            <div class="stats-container" id="statsContainer">
+            <div class="stats-container" id="usersStatsContainer">
                 <div class="stat-card">
                     <div class="stat-icon users">
                         <i class="fas fa-users"></i>
@@ -986,13 +1342,17 @@
                         </tr>
                     </thead>
                     <tbody id="usersTable">
-                        <!-- Данные загрузятся здесь -->
+                        <tr>
+                            <td colspan="7" class="loading">
+                                <i class="fas fa-spinner"></i> Загрузка пользователей...
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Контент вкладки Поддержка -->
+        <!-- Вкладка Поддержка -->
         <div id="supportTab" class="tab-content">
             <div class="chat-container">
                 <!-- Сайдбар со списком пользователей -->
@@ -1043,7 +1403,7 @@
             </div>
         </div>
     </div>
-
+    
     <!-- Модальное окно добавления пользователя -->
     <div class="modal-overlay" id="addUserModal">
         <div class="modal-content">
@@ -1071,13 +1431,13 @@
                 <button class="save-btn" style="flex: 1;" onclick="addNewUser()">
                     <i class="fas fa-check"></i> Создать
                 </button>
-                <button class="delete-btn" style="flex: 1;" onclick="closeAddUserModal()">
+                <button class="cancel-btn" style="flex: 1;" onclick="closeAddUserModal()">
                     <i class="fas fa-times"></i> Отмена
                 </button>
             </div>
         </div>
     </div>
-
+    
     <!-- Модальное окно подтверждения изменения баланса -->
     <div class="confirm-modal-overlay" id="confirmBalanceModal">
         <div class="confirm-modal-content">
@@ -1099,30 +1459,66 @@
         </div>
     </div>
 
+    <!-- Модальное окно редактирования сделки -->
+    <div class="modal-overlay" id="editTradeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> Редактирование сделки</h2>
+                <button class="close-modal" onclick="closeEditTradeModal()">&times;</button>
+            </div>
+            <form id="editTradeForm" onsubmit="updateTrade(event)">
+                <input type="hidden" id="editTradeId">
+                
+                <div class="form-group">
+                    <label>Статус сделки</label>
+                    <select id="editTradeStatus" required>
+                        <option value="отработка">Отработка</option>
+                        <option value="закрыта">Закрыта</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Прибыль/Убыток (PnL в USDT)</label>
+                    <input type="number" id="editTradePnl" step="0.01" placeholder="Введите PnL (может быть отрицательным)">
+                    <small style="color: var(--text-secondary); font-size: 0.8rem;">
+                        Положительное значение - прибыль, отрицательное - убыток
+                    </small>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="save-btn">
+                        <i class="fas fa-save"></i> Сохранить изменения
+                    </button>
+                    <button type="button" class="cancel-btn" onclick="closeEditTradeModal()">
+                        <i class="fas fa-times"></i> Отмена
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <script>
-        // Конфигурация Supabase
+        // =============================================
+        // КОНФИГУРАЦИЯ SUPABASE
+        // =============================================
         const SUPABASE_URL = 'https://wkukgnkfbxgpvlraczeu.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_11WBFNEcbspv1yDyfxq7sQ_Nl51ew5i';
         
-        // Инициализация Supabase
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
-        // Данные для входа
+        // Данные для входа администратора
         const ADMIN_LOGIN = 'admin9';
         const ADMIN_PASSWORD = 'Admin.123451535';
         
         // Глобальные переменные
-        let selectedUserId = null;
-        let selectedUserEmail = null;
-        let chatSubscription = null;
-        let usersSubscription = null;
-        let activeTab = 'users';
-        let isSendingMessage = false;
-        let currentMessages = [];
-        let hasUnreadMessages = false; // Флаг наличия непрочитанных сообщений
-        let unreadMessagesCount = 0; // Счетчик непрочитанных сообщений
+        let currentTrades = [];
+        let currentUsers = [];
+        let tradesChannel = null;
+        let supportChannel = null;
+        let usersChannel = null;
+        let activeTab = 'trades';
         
-        // Переменные для модального окна подтверждения
+        // Переменные для модального окна подтверждения изменения баланса
         let pendingBalanceChange = {
             userId: null,
             userKey: null,
@@ -1131,136 +1527,345 @@
             balanceInput: null
         };
         
-        // DOM элементы
-        const loginContainer = document.getElementById('loginContainer');
-        const adminContainer = document.getElementById('adminContainer');
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const loginStatus = document.getElementById('loginStatus');
-        const statusDiv = document.getElementById('status');
-        const messagesArea = document.getElementById('messagesArea');
-        const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const inputArea = document.getElementById('inputArea');
-        const unreadNotification = document.getElementById('unreadNotification');
-        const unreadNotificationText = document.getElementById('unreadNotificationText');
+        // Переменные для чата поддержки
+        let selectedUserId = null;
+        let selectedUserEmail = null;
+        let chatSubscription = null;
+        let isSendingMessage = false;
+        let currentMessages = [];
+        let hasUnreadMessages = false;
+        let unreadMessagesCount = 0;
         
-        // ===================== ОБЩИЕ ФУНКЦИИ =====================
-        
-        // Показать статус
-        function showStatus(message, type = 'success') {
-            statusDiv.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${message}`;
-            statusDiv.className = `status ${type}`;
-            statusDiv.style.display = 'flex';
-            
-            setTimeout(() => {
-                statusDiv.style.display = 'none';
-            }, type === 'error' ? 5000 : 3000);
-        }
-        
-        // Переключение вкладок
-        function switchTab(tabName) {
-            // Обновляем активные классы
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            // Активируем выбранную вкладку
-            event.target.closest('.tab').classList.add('active');
-            document.getElementById(tabName + 'Tab').classList.add('active');
-            activeTab = tabName;
-            
-            // Если переключились на поддержку - загружаем чат
-            if (tabName === 'support') {
-                loadSupportUsers();
-                setupChatRealtime();
-            }
-        }
-        
-        // Авторизация
-        function login() {
-            const username = usernameInput.value;
-            const password = passwordInput.value;
+        // =============================================
+        // АВТОРИЗАЦИЯ
+        // =============================================
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
             
             if (username === ADMIN_LOGIN && password === ADMIN_PASSWORD) {
-                loginContainer.style.display = 'none';
-                adminContainer.style.display = 'block';
-                loginStatus.textContent = '';
+                // Успешный вход
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('adminContainer').style.display = 'block';
                 
                 // Загружаем данные
-                loadUsers();
+                await loadTrades();
+                await loadUsers();
+                await loadSupportUsers();
                 
-                // Настраиваем real-time обновления
-                setupRealtimeUpdates();
+                // Настраиваем real-time подписки
+                setupRealtimeSubscriptions();
                 
-                // Проверяем непрочитанные сообщения
-                checkUnreadMessages();
-                
-                showStatus('Авторизация успешна! Добро пожаловать в панель управления.', 'success');
+                showToast('Добро пожаловать в панель управления!');
             } else {
-                loginStatus.textContent = 'Неверный логин или пароль';
-                passwordInput.value = '';
+                showToast('Неверный логин или пароль');
             }
         }
         
-        // Выход из системы
         function logout() {
             if (confirm('Вы уверены, что хотите выйти?')) {
                 // Отписываемся от real-time
-                if (chatSubscription) {
-                    supabase.removeChannel(chatSubscription);
-                }
-                if (usersSubscription) {
-                    supabase.removeChannel(usersSubscription);
-                }
+                if (tradesChannel) supabase.removeChannel(tradesChannel);
+                if (supportChannel) supabase.removeChannel(supportChannel);
+                if (usersChannel) supabase.removeChannel(usersChannel);
+                if (chatSubscription) supabase.removeChannel(chatSubscription);
                 
-                loginContainer.style.display = 'flex';
-                adminContainer.style.display = 'none';
-                usernameInput.value = '';
-                passwordInput.value = '';
-                loginStatus.textContent = '';
+                // Возвращаем к логину
+                document.getElementById('adminContainer').style.display = 'none';
+                document.getElementById('loginContainer').style.display = 'flex';
                 
-                // Скрываем уведомление о непрочитанных
-                hideUnreadNotification();
-                
-                // Сбрасываем состояние
-                selectedUserId = null;
-                selectedUserEmail = null;
-                isSendingMessage = false;
-                currentMessages = [];
-                hasUnreadMessages = false;
-                unreadMessagesCount = 0;
+                showToast('Вы вышли из системы');
             }
         }
         
-        // Скрыть уведомление о непрочитанных сообщениях
-        function hideUnreadNotification() {
-            unreadNotification.classList.add('hidden');
-        }
-        
-        // Показать уведомление о непрочитанных сообщениях
-        function showUnreadNotification(count) {
-            unreadNotificationText.innerHTML = `<strong>У вас есть ${count} непрочитанных сообщений</strong> `;
-            unreadNotification.classList.remove('hidden');
-            hasUnreadMessages = true;
-        }
-        
-        // Проверяем, нужно ли показывать уведомление
-        function updateUnreadNotification() {
-            if (unreadMessagesCount > 0 && !hasUnreadMessages) {
-                showUnreadNotification(unreadMessagesCount);
-            } else if (unreadMessagesCount === 0) {
-                hideUnreadNotification();
-                hasUnreadMessages = false;
+        // =============================================
+        // УПРАВЛЕНИЕ ВКЛАДКАМИ
+        // =============================================
+        function switchTab(tabName) {
+            // Скрываем все вкладки
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Показываем выбранную вкладку
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.closest('.tab').classList.add('active');
+            activeTab = tabName;
+            
+            // Загружаем данные если нужно
+            if (tabName === 'users') {
+                loadUsers();
+            } else if (tabName === 'support') {
+                loadSupportUsers();
+                setupChatRealtime();
+            } else if (tabName === 'trades') {
+                loadTrades();
             }
         }
         
-        // ===================== УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ =====================
+        // =============================================
+        // УПРАВЛЕНИЕ СДЕЛКАМИ
+        // =============================================
+        async function loadTrades() {
+            try {
+                // Загружаем все сделки
+                const { data: trades, error } = await supabase
+                    .from('admin_trades_view')
+                    .select('*')
+                    .order('opened_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                currentTrades = trades;
+                displayTrades(trades);
+                updateTradesStats(trades);
+                
+            } catch (error) {
+                console.error('Ошибка загрузки сделок:', error);
+                showToast('Ошибка загрузки сделок');
+            }
+        }
         
-        // Загрузка пользователей для вкладки "Пользователи"
+        function displayTrades(trades) {
+            const table = document.getElementById('tradesTable');
+            
+            if (!trades || trades.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="11" style="text-align: center; padding: 40px; color: var(--text-secondary)">
+                            <i class="fas fa-exchange-alt" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                            Сделки не найдены
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            trades.forEach(trade => {
+                const statusClass = `status-${trade.status === 'отработка' ? 'processing' : 'closed'}`;
+                const statusText = trade.status === 'отработка' ? 'Отработка' : 'Закрыта';
+                
+                const pnlClass = trade.pnl > 0 ? 'pnl-positive' : 
+                               trade.pnl < 0 ? 'pnl-negative' : 'pnl-neutral';
+                const pnlDisplay = trade.pnl ? 
+                    `${trade.pnl > 0 ? '+' : ''}${trade.pnl.toFixed(2)} USDT` : 
+                    '—';
+                
+                const directionClass = trade.direction === 'Лонг' ? 'pnl-positive' : 'pnl-negative';
+                
+                html += `
+                    <tr>
+                        <td style="font-family: monospace; font-size: 0.8rem;">
+                            ${trade.id.substring(0, 8)}...
+                        </td>
+                        <td>
+                            <div style="font-weight: 600;">${trade.user_id}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                ${trade.user_email_full || trade.user_email || '—'}
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 600;">${trade.symbol}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                ${trade.symbol_full}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="${directionClass}">${trade.direction}</span>
+                        </td>
+                        <td style="font-weight: 600;">${parseFloat(trade.size).toFixed(2)} USDT</td>
+                        <td>${trade.leverage}x</td>
+                        <td>${parseFloat(trade.entry_price).toFixed(2)}</td>
+                        <td>
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                        </td>
+                        <td class="${pnlClass}">${pnlDisplay}</td>
+                        <td style="font-size: 0.85rem; color: var(--text-secondary);">
+                            ${formatDateTime(trade.opened_at)}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="action-btn edit-btn" onclick="openEditTradeModal('${trade.id}')">
+                                    <i class="fas fa-edit"></i> Изменить
+                                </button>
+                                <button class="action-btn delete-btn" onclick="deleteTrade('${trade.id}')">
+                                    <i class="fas fa-trash"></i> Удалить
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            table.innerHTML = html;
+        }
+        
+        function updateTradesStats(trades) {
+            const totalTrades = trades.length;
+            const openTrades = trades.filter(t => t.status === 'отработка').length;
+            const closedTrades = trades.filter(t => t.status === 'закрыта').length;
+            const totalProfit = trades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
+            
+            document.getElementById('totalTrades').textContent = totalTrades;
+            document.getElementById('openTrades').textContent = openTrades;
+            document.getElementById('closedTrades').textContent = closedTrades;
+            document.getElementById('totalProfit').textContent = totalProfit.toFixed(2);
+            
+            // Обновляем бейдж на вкладке
+            const tradesBadge = document.getElementById('tradesBadge');
+            if (openTrades > 0) {
+                tradesBadge.textContent = openTrades;
+                tradesBadge.style.display = 'inline';
+            } else {
+                tradesBadge.style.display = 'none';
+            }
+        }
+        
+        // =============================================
+        // ФИЛЬТРАЦИЯ СДЕЛОК
+        // =============================================
+        function applyFilters() {
+            const status = document.getElementById('filterStatus').value;
+            const direction = document.getElementById('filterDirection').value;
+            const user = document.getElementById('filterUser').value.toLowerCase();
+            const symbol = document.getElementById('filterSymbol').value;
+            
+            let filteredTrades = [...currentTrades];
+            
+            if (status !== 'all') {
+                filteredTrades = filteredTrades.filter(t => t.status === status);
+            }
+            
+            if (direction !== 'all') {
+                filteredTrades = filteredTrades.filter(t => t.direction === direction);
+            }
+            
+            if (user) {
+                filteredTrades = filteredTrades.filter(t => 
+                    t.user_id.toLowerCase().includes(user) || 
+                    (t.user_email_full && t.user_email_full.toLowerCase().includes(user)) ||
+                    (t.user_email && t.user_email.toLowerCase().includes(user))
+                );
+            }
+            
+            if (symbol !== 'all') {
+                filteredTrades = filteredTrades.filter(t => t.symbol === symbol);
+            }
+            
+            displayTrades(filteredTrades);
+        }
+        
+        function resetFilters() {
+            document.getElementById('filterStatus').value = 'all';
+            document.getElementById('filterDirection').value = 'all';
+            document.getElementById('filterUser').value = '';
+            document.getElementById('filterSymbol').value = 'all';
+            displayTrades(currentTrades);
+        }
+        
+        // =============================================
+        // РЕДАКТИРОВАНИЕ СДЕЛКИ
+        // =============================================
+        let currentEditTrade = null;
+        
+        async function openEditTradeModal(tradeId) {
+            try {
+                const { data: trade, error } = await supabase
+                    .from('trades')
+                    .select('*')
+                    .eq('id', tradeId)
+                    .single();
+                
+                if (error) throw error;
+                
+                currentEditTrade = trade;
+                
+                // Заполняем форму
+                document.getElementById('editTradeId').value = trade.id;
+                document.getElementById('editTradeStatus').value = trade.status;
+                document.getElementById('editTradePnl').value = trade.pnl || '';
+                
+                // Показываем модальное окно
+                document.getElementById('editTradeModal').style.display = 'flex';
+                
+            } catch (error) {
+                console.error('Ошибка загрузки сделки:', error);
+                showToast('Ошибка загрузки сделки');
+            }
+        }
+        
+        function closeEditTradeModal() {
+            document.getElementById('editTradeModal').style.display = 'none';
+            currentEditTrade = null;
+        }
+        
+        async function updateTrade(event) {
+            event.preventDefault();
+            
+            const tradeId = document.getElementById('editTradeId').value;
+            const status = document.getElementById('editTradeStatus').value;
+            const pnl = parseFloat(document.getElementById('editTradePnl').value) || null;
+            
+            try {
+                const updateData = {
+                    status: status,
+                    updated_at: new Date().toISOString()
+                };
+                
+                // Добавляем PnL только если он указан
+                if (pnl !== null) {
+                    updateData.pnl = pnl;
+                }
+                
+                // Если статус меняется на "закрыта" и не указано время закрытия
+                if (status === 'закрыта' && !currentEditTrade.closed_at) {
+                    updateData.closed_at = new Date().toISOString();
+                    updateData.closed_by = 'admin';
+                }
+                
+                const { error } = await supabase
+                    .from('trades')
+                    .update(updateData)
+                    .eq('id', tradeId);
+                
+                if (error) throw error;
+                
+                closeEditTradeModal();
+                showToast('Сделка успешно обновлена!');
+                
+            } catch (error) {
+                console.error('Ошибка обновления сделки:', error);
+                showToast('Ошибка обновления сделки');
+            }
+        }
+        
+        async function deleteTrade(tradeId) {
+            if (!confirm('Вы уверены, что хотите удалить эту сделку?')) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('trades')
+                    .delete()
+                    .eq('id', tradeId);
+                
+                if (error) throw error;
+                
+                showToast('Сделка успешно удалена!');
+                
+            } catch (error) {
+                console.error('Ошибка удаления сделки:', error);
+                showToast('Ошибка удаления сделки');
+            }
+        }
+        
+        // =============================================
+        // УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ
+        // =============================================
         async function loadUsers() {
             try {
                 const { data: users, error } = await supabase
@@ -1270,25 +1875,18 @@
                 
                 if (error) throw error;
                 
+                currentUsers = users;
                 displayUsers(users);
-                updateStats(users);
+                updateUsersStats(users);
             } catch (error) {
-                showStatus('Ошибка загрузки: ' + error.message, 'error');
+                console.error('Ошибка загрузки пользователей:', error);
             }
         }
         
-        // Обновление статистики - теперь только общее количество пользователей
-        function updateStats(users) {
-            const totalUsers = users.length;
-            document.getElementById('totalUsers').textContent = totalUsers;
-        }
-        
-        // Отображение пользователей в таблице
         function displayUsers(users) {
             const table = document.getElementById('usersTable');
-            table.innerHTML = '';
             
-            if (users.length === 0) {
+            if (!users || users.length === 0) {
                 table.innerHTML = `
                     <tr>
                         <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary)">
@@ -1300,58 +1898,65 @@
                 return;
             }
             
+            let html = '';
+            
             users.forEach(user => {
-                const row = document.createElement('tr');
                 const createdDate = user.created ? new Date(user.created).toLocaleDateString('ru-RU') : '-';
-                
-                // Сохраняем оригинальный баланс в data-атрибут
                 const originalBalance = user.balance || 0;
                 
-                row.innerHTML = `
-                    <td>
-                        <div class="user-login">${escapeHtml(user.user_key)}</div>
-                    </td>
-                    <td class="user-email">${escapeHtml(user.email || '-')}</td>
-                    <td class="balance-cell">
-                        <input type="number" 
-                               class="table-input" 
-                               id="bal_${user.id}" 
-                               value="${originalBalance}" 
-                               step="0.01"
-                               data-original="${originalBalance}"
-                               onchange="handleBalanceChange('${user.id}', '${escapeHtml(user.user_key)}', ${originalBalance}, this.value, this)">
-                    </td>
-                    <td>
-                        <select class="table-select" id="lev_${user.id}">
-                            <option ${user.level === 'Стандарт' ? 'selected' : ''}>Стандарт</option>
-                            <option ${user.level === 'VIP 1' ? 'selected' : ''}>VIP 1</option>
-                            <option ${user.level === 'VIP 2' ? 'selected' : ''}>VIP 2</option>
-                            <option ${user.level === 'VIP 3' ? 'selected' : ''}>VIP 3</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select class="table-select" id="wt_${user.id}">
-                            <option value="normal" ${user.withdraw_type === 'normal' ? 'selected' : ''}>Normal</option>
-                            <option value="request" ${user.withdraw_type === 'request' ? 'selected' : ''}>Request</option>
-                            <option value="commission" ${user.withdraw_type === 'commission' ? 'selected' : ''}>Commission</option>
-                        </select>
-                    </td>
-                    <td style="color: var(--text-secondary); font-size: 0.9rem;">
-                        ${createdDate}
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="save-btn" onclick="saveUser('${user.id}')">
-                                <i class="fas fa-save"></i> Сохранить
-                            </button>
-                            <button class="delete-btn" onclick="deleteUser('${user.id}', '${escapeHtml(user.user_key)}')">
-                                <i class="fas fa-trash"></i> Удалить
-                            </button>
-                        </div>
-                    </td>
+                html += `
+                    <tr>
+                        <td>
+                            <div class="user-login">${escapeHtml(user.user_key)}</div>
+                        </td>
+                        <td class="user-email">${escapeHtml(user.email || '-')}</td>
+                        <td class="balance-cell">
+                            <input type="number" 
+                                   class="table-input" 
+                                   id="bal_${user.id}" 
+                                   value="${originalBalance}" 
+                                   step="0.01"
+                                   data-original="${originalBalance}"
+                                   onchange="handleBalanceChange('${user.id}', '${escapeHtml(user.user_key)}', ${originalBalance}, this.value, this)">
+                        </td>
+                        <td>
+                            <select class="table-select" id="lev_${user.id}">
+                                <option ${user.level === 'Стандарт' ? 'selected' : ''}>Стандарт</option>
+                                <option ${user.level === 'VIP 1' ? 'selected' : ''}>VIP 1</option>
+                                <option ${user.level === 'VIP 2' ? 'selected' : ''}>VIP 2</option>
+                                <option ${user.level === 'VIP 3' ? 'selected' : ''}>VIP 3</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="table-select" id="wt_${user.id}">
+                                <option value="normal" ${user.withdraw_type === 'normal' ? 'selected' : ''}>Normal</option>
+                                <option value="request" ${user.withdraw_type === 'request' ? 'selected' : ''}>Request</option>
+                                <option value="commission" ${user.withdraw_type === 'commission' ? 'selected' : ''}>Commission</option>
+                            </select>
+                        </td>
+                        <td style="color: var(--text-secondary); font-size: 0.9rem;">
+                            ${createdDate}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="action-btn edit-btn" onclick="saveUser('${user.id}')">
+                                    <i class="fas fa-save"></i> Сохранить
+                                </button>
+                                <button class="action-btn delete-btn" onclick="deleteUser('${user.id}', '${escapeHtml(user.user_key)}')">
+                                    <i class="fas fa-trash"></i> Удалить
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
                 `;
-                table.appendChild(row);
             });
+            
+            table.innerHTML = html;
+        }
+        
+        function updateUsersStats(users) {
+            const totalUsers = users.length;
+            document.getElementById('totalUsers').textContent = totalUsers;
         }
         
         // Обработка изменения баланса
@@ -1359,12 +1964,8 @@
             const newBalanceNum = parseFloat(newBalance);
             const oldBalanceNum = parseFloat(oldBalance);
             
-            // Если значение не изменилось - ничего не делаем
-            if (newBalanceNum === oldBalanceNum) {
-                return;
-            }
+            if (newBalanceNum === oldBalanceNum) return;
             
-            // Сохраняем данные для подтверждения
             pendingBalanceChange = {
                 userId: userId,
                 userKey: userKey,
@@ -1373,7 +1974,6 @@
                 balanceInput: inputElement
             };
             
-            // Показываем модальное окно подтверждения
             const message = `Вы хотите изменить баланс пользователя <strong>"${escapeHtml(userKey)}"</strong><br><br>
                            Старый баланс: <span style="color: var(--success)">$${oldBalanceNum.toFixed(2)}</span><br>
                            Новый баланс: <span style="color: var(--accent-cyan)">$${newBalanceNum.toFixed(2)}</span><br><br>
@@ -1384,22 +1984,18 @@
             document.getElementById('confirmBalanceModal').style.display = 'flex';
         }
         
-        // Подтверждение изменения баланса
         function confirmBalanceChange(confirm) {
             const modal = document.getElementById('confirmBalanceModal');
             modal.style.display = 'none';
             
             if (confirm) {
-                // Пользователь подтвердил изменение
                 saveUserBalance(pendingBalanceChange.userId);
             } else {
-                // Пользователь отменил - возвращаем старое значение
                 if (pendingBalanceChange.balanceInput) {
                     pendingBalanceChange.balanceInput.value = pendingBalanceChange.oldBalance;
                 }
             }
             
-            // Сбрасываем pending данные
             pendingBalanceChange = {
                 userId: null,
                 userKey: null,
@@ -1409,13 +2005,10 @@
             };
         }
         
-        // Сохранение изменений пользователя
         async function saveUser(userId) {
             try {
                 const level = document.getElementById(`lev_${userId}`).value;
                 const withdrawType = document.getElementById(`wt_${userId}`).value;
-                
-                // Получаем текущее значение баланса
                 const balanceInput = document.getElementById(`bal_${userId}`);
                 const balance = parseFloat(balanceInput.value) || 0;
                 
@@ -1432,17 +2025,15 @@
                 
                 if (error) throw error;
                 
-                // Обновляем оригинальное значение в data-атрибуте
                 balanceInput.setAttribute('data-original', balance);
-                
-                showStatus('✅ Данные пользователя сохранены!');
+                showToast('✅ Данные пользователя сохранены!');
                 loadUsers();
             } catch (error) {
-                showStatus('❌ Ошибка сохранения: ' + error.message, 'error');
+                console.error('Ошибка сохранения:', error);
+                showToast('❌ Ошибка сохранения');
             }
         }
         
-        // Сохранение только баланса (используется после подтверждения)
         async function saveUserBalance(userId) {
             try {
                 const balanceInput = document.getElementById(`bal_${userId}`);
@@ -1459,17 +2050,15 @@
                 
                 if (error) throw error;
                 
-                // Обновляем оригинальное значение
                 balanceInput.setAttribute('data-original', balance);
-                
-                showStatus('✅ Баланс пользователя обновлен!');
+                showToast('✅ Баланс пользователя обновлен!');
                 
             } catch (error) {
-                showStatus('❌ Ошибка сохранения баланса: ' + error.message, 'error');
+                console.error('Ошибка сохранения баланса:', error);
+                showToast('❌ Ошибка сохранения баланса');
             }
         }
         
-        // Удаление пользователя
         async function deleteUser(userId, userKey) {
             if (!confirm(`Вы уверены, что хотите удалить пользователя "${userKey}"?`)) return;
             
@@ -1481,19 +2070,15 @@
                 
                 if (error) throw error;
                 
-                showStatus('✅ Пользователь успешно удален!');
+                showToast('✅ Пользователь успешно удален!');
                 loadUsers();
                 
-                // Если открыта вкладка поддержки, обновляем и её
-                if (activeTab === 'support') {
-                    loadSupportUsers();
-                }
             } catch (error) {
-                showStatus('❌ Ошибка удаления: ' + error.message, 'error');
+                console.error('Ошибка удаления:', error);
+                showToast('❌ Ошибка удаления');
             }
         }
         
-        // Модальное окно добавления пользователя
         function showAddUserModal() {
             document.getElementById('addUserModal').style.display = 'flex';
             document.getElementById('newUserKey').focus();
@@ -1506,20 +2091,14 @@
             document.getElementById('newBalance').value = '0';
         }
         
-        // Добавление нового пользователя
         async function addNewUser() {
             const userKey = document.getElementById('newUserKey').value.trim();
             const password = document.getElementById('newPassword').value;
             const email = document.getElementById('newEmail').value.trim();
             const balance = parseFloat(document.getElementById('newBalance').value) || 0;
             
-            if (!userKey) {
-                showStatus('Введите логин пользователя', 'error');
-                return;
-            }
-            
-            if (!password) {
-                showStatus('Введите пароль пользователя', 'error');
+            if (!userKey || !password) {
+                showToast('Введите логин и пароль пользователя');
                 return;
             }
             
@@ -1538,25 +2117,21 @@
                 
                 if (error) throw error;
                 
-                showStatus('✅ Пользователь успешно добавлен!');
+                showToast('✅ Пользователь успешно добавлен!');
                 closeAddUserModal();
                 loadUsers();
                 
-                // Если открыта вкладка поддержки, обновляем и её
-                if (activeTab === 'support') {
-                    loadSupportUsers();
-                }
             } catch (error) {
-                showStatus('❌ Ошибка добавления: ' + error.message, 'error');
+                console.error('Ошибка добавления:', error);
+                showToast('❌ Ошибка добавления');
             }
         }
         
-        // ===================== ЧАТ ПОДДЕРЖКИ =====================
-        
-        // Загрузка пользователей для поддержки (с сообщениями)
+        // =============================================
+        // ПОДДЕРЖКА
+        // =============================================
         async function loadSupportUsers() {
             try {
-                // Получаем все сообщения
                 const { data: messages, error: messagesError } = await supabase
                     .from('support_chat')
                     .select('*')
@@ -1564,7 +2139,6 @@
                 
                 if (messagesError) throw messagesError;
                 
-                // Получаем email пользователей из таблицы app_users
                 const { data: users, error: usersError } = await supabase
                     .from('app_users')
                     .select('user_key, email')
@@ -1572,22 +2146,16 @@
                 
                 if (usersError) throw usersError;
                 
-                // Создаем маппинг user_id -> email
                 const userEmailMap = new Map();
                 users.forEach(user => {
                     userEmailMap.set(user.user_key, user.email || 'Не указан');
                 });
                 
-                // Группируем сообщения по пользователям
                 const usersMap = new Map();
                 
-                // Добавляем сообщения
                 messages.forEach(msg => {
                     if (!usersMap.has(msg.user_id)) {
-                        // Берем email из маппинга или из сообщения (если есть)
-                        const userEmail = userEmailMap.get(msg.user_id) || 
-                                         (msg.user_email || 'Не указан');
-                        
+                        const userEmail = userEmailMap.get(msg.user_id) || (msg.user_email || 'Не указан');
                         usersMap.set(msg.user_id, {
                             user_id: msg.user_id,
                             user_email: userEmail,
@@ -1601,28 +2169,21 @@
                     const user = usersMap.get(msg.user_id);
                     user.messages.push(msg);
                     
-                    // Обновляем последнее сообщение если новее
                     if (!user.last_message_time || new Date(msg.created_at) > new Date(user.last_message_time)) {
                         user.last_message = msg.message;
                         user.last_message_time = msg.created_at;
                     }
                     
-                    // Считаем непрочитанные сообщения от пользователя
                     if (!msg.read && !msg.is_admin) {
                         user.unread_count++;
                     }
                 });
                 
-                // Конвертируем Map в массив
                 const supportUsers = Array.from(usersMap.values());
-                
-                // Фильтруем пользователей без сообщений
                 const usersWithMessages = supportUsers.filter(user => user.messages.length > 0);
                 
-                // Отображаем пользователей
                 displaySupportUsers(usersWithMessages);
                 
-                // Обновляем счетчик непрочитанных сообщений
                 let totalUnread = 0;
                 usersWithMessages.forEach(user => {
                     totalUnread += user.unread_count;
@@ -1630,30 +2191,21 @@
                 
                 unreadMessagesCount = totalUnread;
                 
-                // Обновляем бейдж на вкладке
-                const badge = document.getElementById('unreadSupportBadge');
+                const badge = document.getElementById('supportBadge');
                 if (totalUnread > 0) {
                     badge.textContent = totalUnread;
                     badge.style.display = 'inline';
-                    
-                    // Проверяем, нужно ли показывать уведомление
-                    updateUnreadNotification();
                 } else {
                     badge.style.display = 'none';
-                    hideUnreadNotification();
-                    hasUnreadMessages = false;
                 }
                 
             } catch (error) {
-                console.error('Ошибка загрузки пользователей поддержки:', error);
-                showStatus('❌ Ошибка загрузки чата', 'error');
+                console.error('Ошибка загрузки поддержки:', error);
             }
         }
         
-        // Отображение пользователей в сайдбаре поддержки
         function displaySupportUsers(users) {
             const usersList = document.getElementById('supportUsersList');
-            usersList.innerHTML = '';
             
             if (users.length === 0) {
                 usersList.innerHTML = `
@@ -1665,13 +2217,10 @@
                 return;
             }
             
-            // Сортируем пользователей по времени последнего сообщения (сначала новые)
             users.sort((a, b) => new Date(b.last_message_time) - new Date(a.last_message_time));
             
+            let html = '';
             users.forEach(user => {
-                const userItem = document.createElement('div');
-                userItem.className = 'user-item';
-                
                 const lastMessageTime = user.last_message_time 
                     ? new Date(user.last_message_time).toLocaleTimeString('ru-RU', {
                         hour: '2-digit',
@@ -1679,22 +2228,22 @@
                     })
                     : '';
                 
-                userItem.innerHTML = `
-                    <div class="user-email">${escapeHtml(user.user_email)}</div>
-                    <div class="user-id">ID: ${user.user_id.substring(0, 20)}...</div>
-                    <div class="last-message" title="${escapeHtml(user.last_message)}">
-                        ${escapeHtml(user.last_message.substring(0, 50))}${user.last_message.length > 50 ? '...' : ''}
+                html += `
+                    <div class="user-item" onclick="selectSupportUser('${user.user_id}', '${escapeHtml(user.user_email)}')">
+                        <div class="user-email">${escapeHtml(user.user_email)}</div>
+                        <div class="user-id">ID: ${user.user_id.substring(0, 20)}...</div>
+                        <div class="last-message" title="${escapeHtml(user.last_message)}">
+                            ${escapeHtml(user.last_message.substring(0, 50))}${user.last_message.length > 50 ? '...' : ''}
+                        </div>
+                        ${lastMessageTime ? `<div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">${lastMessageTime}</div>` : ''}
+                        ${user.unread_count > 0 ? `<div class="unread-badge">${user.unread_count}</div>` : ''}
                     </div>
-                    ${lastMessageTime ? `<div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">${lastMessageTime}</div>` : ''}
-                    ${user.unread_count > 0 ? `<div class="unread-badge">${user.unread_count}</div>` : ''}
                 `;
-                
-                userItem.onclick = () => selectSupportUser(user.user_id, user.user_email);
-                usersList.appendChild(userItem);
             });
+            
+            usersList.innerHTML = html;
         }
         
-        // Фильтрация пользователей в чате
         function filterChatUsers(searchTerm) {
             const userItems = document.querySelectorAll('#supportUsersList .user-item');
             searchTerm = searchTerm.toLowerCase();
@@ -1711,35 +2260,24 @@
             });
         }
         
-        // Выбор пользователя для общения в поддержке
         async function selectSupportUser(userId, userEmail) {
             selectedUserId = userId;
             selectedUserEmail = userEmail;
             
-            // Обновляем активный элемент в списке
             document.querySelectorAll('#supportUsersList .user-item').forEach(item => {
                 item.classList.remove('active');
             });
             event.target.closest('.user-item').classList.add('active');
             
-            // Обновляем заголовок чата
             document.getElementById('selectedUserName').textContent = userEmail || userId;
             document.getElementById('selectedUserEmail').textContent = `ID: ${userId}`;
             
-            // Показываем поле ввода
-            inputArea.style.display = 'block';
-            
-            // Загружаем историю сообщений
+            document.getElementById('inputArea').style.display = 'block';
             await loadSupportMessages();
-            
-            // Помечаем сообщения как прочитанные
             await markSupportMessagesAsRead();
-            
-            // Фокус на поле ввода
-            messageInput.focus();
+            document.getElementById('messageInput').focus();
         }
         
-        // Загрузка сообщений поддержки
         async function loadSupportMessages() {
             if (!selectedUserId) return;
             
@@ -1757,12 +2295,11 @@
                 
             } catch (error) {
                 console.error('Ошибка загрузки сообщений:', error);
-                showStatus('❌ Ошибка загрузки сообщений', 'error');
             }
         }
         
-        // Отображение сообщений поддержки
         function displaySupportMessages(messages) {
+            const messagesArea = document.getElementById('messagesArea');
             messagesArea.innerHTML = '';
             
             if (messages.length === 0) {
@@ -1785,7 +2322,6 @@
             scrollToBottom();
         }
         
-        // Создание элемента сообщения
         function createMessageElement(msg) {
             const messageDiv = document.createElement('div');
             const time = new Date(msg.created_at).toLocaleTimeString('ru-RU', {
@@ -1803,24 +2339,24 @@
             return messageDiv;
         }
         
-        // ОТПРАВКА СООБЩЕНИЯ ОТ АДМИНА
         async function sendMessage() {
             if (isSendingMessage) return;
             
             if (!selectedUserId || !selectedUserEmail) {
-                showStatus('Выберите пользователя', 'error');
+                showToast('Выберите пользователя');
                 return;
             }
             
-            const message = messageInput.value.trim();
+            const message = document.getElementById('messageInput').value.trim();
             
             if (!message) {
-                showStatus('Введите сообщение', 'error');
-                messageInput.focus();
+                showToast('Введите сообщение');
+                document.getElementById('messageInput').focus();
                 return;
             }
             
             isSendingMessage = true;
+            const sendBtn = document.getElementById('sendBtn');
             sendBtn.disabled = true;
             sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
             
@@ -1837,17 +2373,14 @@
                     .from('support_chat')
                     .insert([messageData]);
                 
-                if (error) {
-                    console.error('Ошибка Supabase:', error);
-                    throw error;
-                }
+                if (error) throw error;
                 
-                messageInput.value = '';
-                messageInput.focus();
+                document.getElementById('messageInput').value = '';
+                document.getElementById('messageInput').focus();
                 
             } catch (error) {
                 console.error('Ошибка отправки сообщения:', error);
-                showStatus('❌ Ошибка отправки сообщения: ' + error.message, 'error');
+                showToast('❌ Ошибка отправки сообщения');
             } finally {
                 isSendingMessage = false;
                 sendBtn.disabled = false;
@@ -1855,15 +2388,13 @@
             }
         }
         
-        // Обработка нажатия Enter в поле ввода
-        messageInput.addEventListener('keydown', function(event) {
+        document.getElementById('messageInput').addEventListener('keydown', function(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
                 sendMessage();
             }
         });
         
-        // Пометить сообщения поддержки как прочитанные
         async function markSupportMessagesAsRead() {
             if (!selectedUserId) return;
             
@@ -1877,7 +2408,6 @@
                 
                 if (error) throw error;
                 
-                // Обновляем список пользователей
                 await loadSupportUsers();
                 
             } catch (error) {
@@ -1885,40 +2415,57 @@
             }
         }
         
-        // Проверка непрочитанных сообщений
-        async function checkUnreadMessages() {
-            try {
-                const { data: messages, error } = await supabase
-                    .from('support_chat')
-                    .select('*')
-                    .eq('is_admin', false)
-                    .eq('read', false);
-                
-                if (error) throw error;
-                
-                const unreadCount = messages.length;
-                unreadMessagesCount = unreadCount;
-                
-                const badge = document.getElementById('unreadSupportBadge');
-                
-                if (unreadCount > 0) {
-                    badge.textContent = unreadCount;
-                    badge.style.display = 'inline';
-                    
-                    // Всегда показываем уведомление, если есть непрочитанные сообщения
-                    showUnreadNotification(unreadCount);
-                } else {
-                    badge.style.display = 'none';
-                    hideUnreadNotification();
-                    hasUnreadMessages = false;
-                }
-                
-            } catch (error) {
-                console.error('Ошибка проверки непрочитанных:', error);
-            }
+        function scrollToBottom() {
+            setTimeout(() => {
+                const messagesArea = document.getElementById('messagesArea');
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            }, 100);
         }
         
-        // Настройка real-time для чата поддержки
+        // Скрыть уведомление о непрочитанных сообщениях
+        function hideUnreadNotification() {
+            document.getElementById('unreadNotification').classList.add('hidden');
+        }
+        
+        // =============================================
+        // REAL-TIME ПОДПИСКИ
+        // =============================================
+        function setupRealtimeSubscriptions() {
+            // Подписка на сделки
+            tradesChannel = supabase
+                .channel('admin-trades-realtime')
+                .on('postgres_changes', 
+                    { 
+                        event: '*', 
+                        schema: 'public', 
+                        table: 'trades' 
+                    },
+                    async (payload) => {
+                        console.log('Real-time обновление сделки:', payload);
+                        await loadTrades();
+                    }
+                )
+                .subscribe();
+            
+            // Подписка на пользователей
+            usersChannel = supabase
+                .channel('admin-users-realtime')
+                .on('postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'app_users'
+                    },
+                    async (payload) => {
+                        console.log('Real-time обновление пользователя:', payload);
+                        await loadUsers();
+                    }
+                )
+                .subscribe();
+            
+            setupChatRealtime();
+        }
+        
         function setupChatRealtime() {
             if (chatSubscription) {
                 supabase.removeChannel(chatSubscription);
@@ -1935,10 +2482,8 @@
                     async (payload) => {
                         console.log('Новое сообщение получено:', payload.new);
                         
-                        // Если сообщение от пользователя и непрочитанное
                         if (!payload.new.is_admin && !payload.new.read) {
                             unreadMessagesCount++;
-                            showUnreadNotification(unreadMessagesCount);
                         }
                         
                         await loadSupportUsers();
@@ -1947,13 +2492,9 @@
                             const existingMessage = document.querySelector(`[data-message-id="${payload.new.id}"]`);
                             if (!existingMessage) {
                                 const messageDiv = createMessageElement(payload.new);
-                                messagesArea.appendChild(messageDiv);
+                                document.getElementById('messagesArea').appendChild(messageDiv);
                                 scrollToBottom();
                             }
-                        }
-                        
-                        if (!payload.new.is_admin && payload.new.user_id !== selectedUserId) {
-                            showStatus(`📩 Новое сообщение от пользователя`, 'success');
                         }
                     }
                 )
@@ -1966,9 +2507,7 @@
                     async (payload) => {
                         console.log('Сообщение обновлено:', payload.new);
                         
-                        // Если сообщение было помечено как прочитанное
                         if (payload.new.read && payload.old.read === false && !payload.new.is_admin) {
-                            // Пересчитываем непрочитанные сообщения
                             await loadSupportUsers();
                         }
                     }
@@ -1976,35 +2515,26 @@
                 .subscribe();
         }
         
-        // Прокрутка вниз
-        function scrollToBottom() {
-            setTimeout(() => {
-                messagesArea.scrollTop = messagesArea.scrollHeight;
-            }, 100);
-        }
-        
-        // Общая real-time подписка
-        function setupRealtimeUpdates() {
-            usersSubscription = supabase
-                .channel('realtime_users')
-                .on('postgres_changes', 
-                    { event: '*', schema: 'public', table: 'app_users' },
-                    () => {
-                        console.log('Обновление пользователей!');
-                        loadUsers();
-                        if (activeTab === 'support') {
-                            loadSupportUsers();
-                        }
-                    }
-                )
-                .subscribe();
+        // =============================================
+        // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+        // =============================================
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
             
-            setupChatRealtime();
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
         }
         
-        // ===================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====================
+        function formatDateTime(dateString) {
+            if (!dateString) return '—';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ru-RU') + ' ' + 
+                   date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }
         
-        // Экранирование HTML для предотвращения XSS
         function escapeHtml(text) {
             if (!text) return '';
             const div = document.createElement('div');
@@ -2012,15 +2542,14 @@
             return div.innerHTML;
         }
         
-        // ===================== ИНИЦИАЛИЗАЦИЯ =====================
-        
-        // Назначаем обработчики событий
+        // =============================================
+        // ИНИЦИАЛИЗАЦИЯ
+        // =============================================
         document.addEventListener('DOMContentLoaded', function() {
-            usernameInput.focus();
+            document.getElementById('username').focus();
             
-            // Обработчик Enter в форме логина
             document.addEventListener('keydown', function(event) {
-                if (event.key === 'Enter' && loginContainer.style.display !== 'none') {
+                if (event.key === 'Enter' && document.getElementById('loginContainer').style.display !== 'none') {
                     login();
                 }
             });
